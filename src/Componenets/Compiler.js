@@ -6,39 +6,48 @@ const Compiler = () => {
   const [output, setOutput] = useState('');
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
+ const isHTMLDetected = code.includes('<html') || code.includes('<HTML');
   const compileCode = async () => {
     setIsLoading(true);
 
-    const options = {
-      method: 'POST',
-      url: 'https://onecompiler-apis.p.rapidapi.com/api/v1/run',
-      headers: {
-        'content-type': 'application/json',
-        'X-RapidAPI-Key': 'b5651fc483msh2b788579e10c869p168764jsneea5672e72aa',
-        'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com',
-      },
-      data: {
-        language: 'javascript',
-        stdin: input,
-        files: [
-          {
-            name: 'index.py',
-            content: code,
-          },
-        ],
-      },
-    };
+   
 
-    try {
-      const response = await axios.request(options);
-      const apiOutput = response.data.stdout;
-      setOutput(apiOutput);
-    } catch (error) {
-      console.error(error);
+    if (isHTMLDetected) {
+      const newWindow = window.open();
+      newWindow.document.write(code);
+      setIsLoading(false);
+      newWindow.document.close();
+    } else {
+      const options = {
+        method: 'POST',
+        url: 'https://onecompiler-apis.p.rapidapi.com/api/v1/run',
+        headers: {
+          'content-type': 'application/json',
+          'X-RapidAPI-Key': 'b5651fc483msh2b788579e10c869p168764jsneea5672e72aa',
+          'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com',
+        },
+        data: {
+          language: 'javascript',
+          stdin: input,
+          files: [
+            {
+              name: 'index.py',
+              content: code,
+            },
+          ],
+        },
+      };
+
+      try {
+        const response = await axios.request(options);
+        const apiOutput = response.data.stdout;
+        setOutput(apiOutput);
+      } catch (error) {
+        console.error(error);
+      }
+
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -104,15 +113,11 @@ const Compiler = () => {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Enter your code..."
-            >
-
-              
-            </textarea>
-           
+            ></textarea>
           </div>
         </div>
       </div>
-      <div style={{ flex: '0 0 30%', backgroundColor: '#fff' }}>
+      <div style={{ flex: '0 30%', backgroundColor: '#fff' }}>
         <div
           style={{
             backgroundColor: '#1e1e1e',
@@ -147,7 +152,6 @@ const Compiler = () => {
             fontSize: '14px',
           }}
         >
-        
           Input
         </div>
         <textarea
@@ -167,30 +171,29 @@ const Compiler = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
         ></textarea>
-
-
       </div>
       <button
-              style={{
-                position: 'absolute',
-                bottom: '10px',
-                left: '50px',
-                padding: '10px 20px',
-                backgroundColor: '#5cb85c',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: 'bold',
-              }}
-              onClick={compileCode}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Compiling...' : 'Compile'}
-            </button>
+        style={{
+          position: 'absolute',
+          bottom: '10px',
+          left: '50px',
+          padding: '10px 20px',
+          backgroundColor: '#5cb85c',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          animation: isHTMLDetected ? 'none' : 'pulse 1s infinite',
+        }}
+        onClick={compileCode}
+        disabled={isLoading}
+      >
+        
+        {isLoading ? 'Compiling...' : 'Compile'}
+      </button>
     </div>
-    
   );
 };
 
